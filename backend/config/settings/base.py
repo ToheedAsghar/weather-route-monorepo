@@ -1,5 +1,6 @@
 """Base Django settings for weather-aware-truck-routing project."""
 
+import sys
 from pathlib import Path
 
 import environ
@@ -70,13 +71,21 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 # Database
-# Uses DATABASE_URL if provided, else falls back to local sqlite3 for ease of dev/test
-DATABASES = {
-    "default": env.db_url(
-        "DATABASE_URL",
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-    )
-}
+# If running automated tests, use in-memory SQLite; otherwise use DATABASE_URL
+if "pytest" in sys.modules or "test" in sys.argv:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        }
+    }
+else:
+    DATABASES = {
+        "default": env.db_url(
+            "DATABASE_URL",
+            default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        )
+    }
 
 # Password validation
 AUTH_PWD_MODULE = "django.contrib.auth.password_validation"
