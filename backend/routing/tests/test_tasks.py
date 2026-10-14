@@ -113,4 +113,3 @@ class TestEvaluateRouteWeatherTask:
         assert mock_tomorrow.return_value.fetch_weather.call_count == initial_fetch_count
         job2.refresh_from_db()
         assert job2.status == JobStatus.SUCCESS
-

@@ -3,10 +3,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 
-from routing.utils.geo_math import (
-    haversine_distance_miles,
-    interpolate_coordinates,
-)
+from routing.utils.geo_math import haversine_distance_miles, interpolate_coordinates
 from routing.utils.geohash_utils import encode_geohash
 
 

@@ -5,6 +5,11 @@ import uuid
 from django.db import models
 from django.utils import timezone
 
+from .constants import (
+    DEFAULT_CHECKPOINT_INTERVAL_MILES, HELP_TEXT_CHECKPOINT_INTERVAL, HELP_TEXT_COORDINATE_JSON,
+    HELP_TEXT_DEPARTURE_TIME, HELP_TEXT_ERROR_MESSAGE, HELP_TEXT_LOAD_WEIGHT_LBS, HELP_TEXT_RESULT_PAYLOAD,
+)
+
 
 class JobStatus(models.TextChoices):
     PENDING = "PENDING", "Pending"
@@ -25,29 +30,27 @@ class RouteEvaluationJob(models.Model):
     )
 
     # Input parameters
-    origin = models.JSONField(help_text="{'lat': float, 'lon': float, 'address': str}")
-    destination = models.JSONField(
-        help_text="{'lat': float, 'lon': float, 'address': str}"
-    )
-    departure_time = models.DateTimeField(help_text="Departure time in ISO 8601 format")
+    origin = models.JSONField(help_text=HELP_TEXT_COORDINATE_JSON)
+    destination = models.JSONField(help_text=HELP_TEXT_COORDINATE_JSON)
+    departure_time = models.DateTimeField(help_text=HELP_TEXT_DEPARTURE_TIME)
     load_weight_lbs = models.PositiveIntegerField(
-        help_text="Gross truck load weight in pounds"
+        help_text=HELP_TEXT_LOAD_WEIGHT_LBS
     )
     checkpoint_interval_miles = models.PositiveIntegerField(
-        default=25,
-        help_text="Interval in miles between weather checkpoints (10, 25, or 50)",
+        default=DEFAULT_CHECKPOINT_INTERVAL_MILES,
+        help_text=HELP_TEXT_CHECKPOINT_INTERVAL,
     )
 
     # Result data
     result_payload = models.JSONField(
         null=True,
         blank=True,
-        help_text="Complete evaluated payload with ranked routes",
+        help_text=HELP_TEXT_RESULT_PAYLOAD,
     )
     error_message = models.TextField(
         null=True,
         blank=True,
-        help_text="Diagnostic error details if the job failed",
+        help_text=HELP_TEXT_ERROR_MESSAGE,
     )
 
     # Timestamps

@@ -8,11 +8,9 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .constants import DEFAULT_CHECKPOINT_INTERVAL_MILES
 from .models import JobStatus, RouteEvaluationJob
-from .serializers import (
-    RouteEvaluationJobResponseSerializer,
-    RouteEvaluationRequestSerializer,
-)
+from .serializers import RouteEvaluationJobResponseSerializer, RouteEvaluationRequestSerializer
 from .services.geocoding_service import GeocodingService
 from .tasks import evaluate_route_weather
 from .throttles import GeocodeIpRateThrottle, RouteEvaluationGatewayThrottle
@@ -40,7 +38,7 @@ class RouteEvaluationGatewayView(APIView):
             destination=data["destination"],
             departure_time=data["departure_time"],
             load_weight_lbs=data["load_weight_lbs"],
-            checkpoint_interval_miles=data.get("checkpoint_interval_miles", 25),
+            checkpoint_interval_miles=data.get("checkpoint_interval_miles", DEFAULT_CHECKPOINT_INTERVAL_MILES),
             status=JobStatus.PENDING,
         )
 
@@ -84,4 +82,3 @@ class GeocodeAutocompleteView(APIView):
         service = GeocodingService()
         suggestions = service.search_places(query)
         return Response(suggestions, status=status.HTTP_200_OK)
-

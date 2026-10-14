@@ -2,11 +2,7 @@
 
 from django.urls import path
 
-from .views import (
-    GeocodeAutocompleteView,
-    RouteEvaluationGatewayView,
-    RouteEvaluationPollingView,
-)
+from .views import GeocodeAutocompleteView, RouteEvaluationGatewayView, RouteEvaluationPollingView
 
 app_name = "routing"
 
