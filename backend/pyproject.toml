@@ -39,26 +39,13 @@ dev = [
     "types-python-dateutil>=2.9.0",
 ]
 
-[tool.black]
-line-length = 88
-target-version = ["py311", "py312"]
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.venv
-  | build
-  | dist
-  | migrations
-)/
-'''
-
 [tool.isort]
-profile = "black"
-line_length = 88
-multi_line_output = 3
+line_length = 120
+multi_line_output = 5
 include_trailing_comma = true
-skip = ["migrations", ".venv"]
+force_grid_wrap = 0
+known_first_party = ["config", "routing"]
+skip = ["migrations", "venv", ".env", ".venv"]
 
 [tool.mypy]
 python_version = "3.11"
