@@ -4,7 +4,7 @@ import { memo, useEffect, useRef } from "react";
 import type { FeatureCollection, LineString, Point } from "geojson";
 
 import type { Checkpoint, GeoLocation, RouteOption } from "@/common/types";
-import { RISK_COLORS } from "@/common/types";
+import { MAP_CONFIG, RISK_COLORS } from "@/constants";
 
 interface RouteMapProps {
   origin?: GeoLocation;
@@ -16,9 +16,7 @@ interface RouteMapProps {
   onCheckpointSelect: (checkpoint: Checkpoint) => void;
 }
 
-const ROUTES_SOURCE = "weather-routes";
-const CHECKPOINTS_SOURCE = "route-checkpoints";
-const WEATHER_SOURCE = "weather-corridor";
+const { ROUTES: ROUTES_SOURCE, CHECKPOINTS: CHECKPOINTS_SOURCE, WEATHER: WEATHER_SOURCE } = MAP_CONFIG.SOURCES;
 
 function RouteMapComponent({
   origin,
@@ -68,12 +66,12 @@ function RouteMapComponent({
       const inkColor = themeColor("--primary", "#111827");
       const brassColor = themeColor("--brass", "#f59e0b");
 
-      const initialCenter: [number, number] = origin ? [origin.lon, origin.lat] : [20, 20];
-      const initialZoom = origin ? 10 : 2;
+      const initialCenter: [number, number] = origin ? [origin.lon, origin.lat] : MAP_CONFIG.DEFAULT_CENTER;
+      const initialZoom = origin ? MAP_CONFIG.FOCUSED_ZOOM : MAP_CONFIG.DEFAULT_ZOOM;
 
       const map = new mapboxgl.Map({
         container: containerRef.current,
-        style: "mapbox://styles/mapbox/light-v11",
+        style: MAP_CONFIG.STYLE_URL,
         center: initialCenter,
         zoom: initialZoom,
         attributionControl: false,

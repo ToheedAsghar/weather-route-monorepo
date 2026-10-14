@@ -1,5 +1,6 @@
 import React from "react";
 import { Navigation } from "lucide-react";
+import { APP_CONFIG } from "@/constants";
 
 export function Header(): React.ReactElement {
   return (
@@ -7,7 +8,7 @@ export function Header(): React.ReactElement {
       <div className="flex items-center gap-2 text-primary">
         <Navigation className="size-[18px]" strokeWidth={2.2} />
         <span className="text-[17px] font-extrabold tracking-tight">
-          WeatherRoute<span className="text-muted-foreground">.</span>
+          {APP_CONFIG.name}<span className="text-muted-foreground">.</span>
         </span>
       </div>
 

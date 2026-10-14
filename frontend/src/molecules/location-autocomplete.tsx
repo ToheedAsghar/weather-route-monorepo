@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Loader2, MapPin, X } from "lucide-react";
 import { searchLocations } from "@/repositories/api/route-service";
+import { GEOCODING_CONFIG } from "@/constants";
 import type { GeoLocation, LocationSuggestion } from "@/common/types";
 
 interface LocationAutocompleteProps {
@@ -69,8 +70,8 @@ export function LocationAutocomplete({
 
       const trimmed = text.trim();
 
-      // 3. Start only after 3 characters
-      if (trimmed.length < 3) {
+      // Start only after minimum configured characters
+      if (trimmed.length < GEOCODING_CONFIG.MIN_QUERY_LENGTH) {
         setSuggestions([]);
         setIsOpen(false);
         setIsLoading(false);
@@ -79,7 +80,7 @@ export function LocationAutocomplete({
 
       setIsLoading(true);
 
-      // 4. Fire after 300 ms debounce
+      // Debounced search trigger
       debounceTimerRef.current = window.setTimeout(async () => {
         const controller = new AbortController();
         abortControllerRef.current = controller;
@@ -100,7 +101,7 @@ export function LocationAutocomplete({
         } finally {
           setIsLoading(false);
         }
-      }, 300);
+      }, GEOCODING_CONFIG.DEBOUNCE_MS);
     },
     [disabled, onOffline, onSelect]
   );

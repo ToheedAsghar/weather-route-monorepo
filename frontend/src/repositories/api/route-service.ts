@@ -1,10 +1,16 @@
 import type { CompletedRouteJob, Coordinate, GeoLocation, LocationSuggestion, RiskLevel, RouteJobResponse, RouteOption, RouteRequest, RouteSegment, Checkpoint, WeatherSnapshot } from "@/common/types";
+import { API_CONFIG, GEOCODING_CONFIG, PLANNER_DEFAULTS } from "@/constants";
 
 const RAW_API_URL = (import.meta.env["VITE_API_URL"] as string | undefined)?.replace(/\/$/, "");
 const API_BASE = RAW_API_URL ? RAW_API_URL.replace(/\/api$/, "") : "";
-const ROUTE_URL = API_BASE ? `${API_BASE}/api/route/` : "/api/route/";
-const POLL_URL = (id: string) => (API_BASE ? `${API_BASE}/api/route/${encodeURIComponent(id)}/` : `/api/route/${encodeURIComponent(id)}/`);
-const AUTOCOMPLETE_URL = API_BASE ? `${API_BASE}/api/geocode/autocomplete/` : "/api/geocode/autocomplete/";
+const ROUTE_URL = API_BASE ? `${API_BASE}${API_CONFIG.ENDPOINTS.ROUTE}` : API_CONFIG.ENDPOINTS.ROUTE;
+const POLL_URL = (id: string) =>
+  API_BASE
+    ? `${API_BASE}${API_CONFIG.ENDPOINTS.ROUTE}${encodeURIComponent(id)}/`
+    : `${API_CONFIG.ENDPOINTS.ROUTE}${encodeURIComponent(id)}/`;
+const AUTOCOMPLETE_URL = API_BASE
+  ? `${API_BASE}${API_CONFIG.ENDPOINTS.AUTOCOMPLETE}`
+  : API_CONFIG.ENDPOINTS.AUTOCOMPLETE;
 
 export class RoutingEngineOfflineError extends Error {
   constructor(message = "System Offline: Cannot connect to routing engine.") {
@@ -25,7 +31,7 @@ export async function checkRoutingEngineHealth(signal?: AbortSignal): Promise<bo
 
 export async function searchLocations(query: string, signal?: AbortSignal): Promise<LocationSuggestion[]> {
   const clean = query.trim();
-  if (clean.length < 3) return [];
+  if (clean.length < GEOCODING_CONFIG.MIN_QUERY_LENGTH) return [];
 
   // Strictly query backend endpoint with Redis caching & IP rate limit.
   // Direct client-side Mapbox geocoding calls are strictly forbidden.
@@ -64,7 +70,7 @@ export async function submitRouteJob(request: RouteRequest, signal?: AbortSignal
   let originCoord: GeoLocation;
   if (typeof request.origin === "object" && request.origin !== null) {
     originCoord = request.origin;
-  } else if (typeof request.origin === "string" && request.origin.trim().length >= 3) {
+  } else if (typeof request.origin === "string" && request.origin.trim().length >= GEOCODING_CONFIG.MIN_QUERY_LENGTH) {
     const suggestions = await searchLocations(request.origin, signal);
     if (!suggestions[0]) {
       throw new Error(`Unable to resolve coordinates for Origin: "${request.origin}". Please select a location from the dropdown suggestions.`);
@@ -77,7 +83,7 @@ export async function submitRouteJob(request: RouteRequest, signal?: AbortSignal
   let destCoord: GeoLocation;
   if (typeof request.destination === "object" && request.destination !== null) {
     destCoord = request.destination;
-  } else if (typeof request.destination === "string" && request.destination.trim().length >= 3) {
+  } else if (typeof request.destination === "string" && request.destination.trim().length >= GEOCODING_CONFIG.MIN_QUERY_LENGTH) {
     const suggestions = await searchLocations(request.destination, signal);
     if (!suggestions[0]) {
       throw new Error(`Unable to resolve coordinates for Destination: "${request.destination}". Please select a location from the dropdown suggestions.`);
@@ -96,7 +102,7 @@ export async function submitRouteJob(request: RouteRequest, signal?: AbortSignal
     destination: destCoord,
     departure_time: departureIso,
     load_weight_lbs: request.load_weight_lbs,
-    checkpoint_interval_miles: 25,
+    checkpoint_interval_miles: API_CONFIG.DEFAULT_CHECKPOINT_INTERVAL_MILES,
   };
 
   let response: Response;
@@ -179,7 +185,7 @@ export async function getRouteJob(jobId: string, attempt: number, signal?: Abort
         // Create timeline weather snapshots (0 to 48 hours) for interactive forecasting
         const weatherSnapshots: WeatherSnapshot[] = Array.from({ length: 9 }, (_, i) => {
           const hour = i * 6;
-          const decay = Math.max(0.6, 1 - Math.abs(hour - 18) / 60);
+          const decay = Math.max(0.6, 1 - Math.abs(hour - PLANNER_DEFAULTS.FORECAST_HOUR) / 60);
           return {
             hour,
             windMph: Math.round(baseWind * decay),
@@ -236,12 +242,11 @@ export async function getRouteJob(jobId: string, attempt: number, signal?: Abort
 }
 
 export async function pollRouteJob(jobId: string, signal?: AbortSignal): Promise<CompletedRouteJob> {
-  const maximumAttempts = 60;
-  for (let attempt = 0; attempt < maximumAttempts; attempt += 1) {
+  for (let attempt = 0; attempt < API_CONFIG.POLLING.MAX_ATTEMPTS; attempt += 1) {
     const result = await getRouteJob(jobId, attempt, signal);
     if (result.status === "complete") return result;
     if (result.status === "failed") throw new Error(result.message || "Route planning failed");
-    await wait(2_000, signal);
+    await wait(API_CONFIG.POLLING.INTERVAL_MS, signal);
   }
   throw new Error("Route planning timed out. Please try again.");
 }

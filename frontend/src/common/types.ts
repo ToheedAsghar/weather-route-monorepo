@@ -70,10 +70,4 @@ export type RouteJobResponse =
   | CompletedRouteJob
   | { status: "failed"; job_id: string; message: string };
 
-export const RISK_COLORS: Record<RiskLevel, string> = {
-  low: "#16a34a",
-  moderate: "#eab308",
-  high: "#f97316",
-  severe: "#dc2626",
-  "no-travel": "#171717",
-};
+export { RISK_COLORS } from "@/constants";

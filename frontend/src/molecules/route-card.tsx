@@ -1,6 +1,7 @@
 import React from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/atoms/button";
+import { RISK_CONFIG } from "@/constants";
 import type { RouteOption } from "@/common/types";
 
 interface RouteCardProps {
@@ -58,11 +59,11 @@ export function RouteCard({ route, active, onClick }: RouteCardProps): React.Rea
         <Metric value={`${hours}h ${minutes}m`} label="Travel time" />
         <div>
           <div className="flex flex-wrap gap-1">
-            <span className="rounded-sm bg-danger px-1.5 py-0.5 text-[9px] font-extrabold text-danger-foreground">
-              {route.severeMiles} S
+            <span className={`rounded-sm ${RISK_CONFIG.severe.badgeClass} px-1.5 py-0.5 text-[9px] font-extrabold text-danger-foreground`}>
+              {route.severeMiles} {RISK_CONFIG.severe.shortLabel}
             </span>
-            <span className="rounded-sm bg-high px-1.5 py-0.5 text-[9px] font-extrabold text-high-foreground">
-              {route.highMiles} H
+            <span className={`rounded-sm ${RISK_CONFIG.high.badgeClass} px-1.5 py-0.5 text-[9px] font-extrabold text-high-foreground`}>
+              {route.highMiles} {RISK_CONFIG.high.shortLabel}
             </span>
           </div>
           <p className="mt-1 text-[9px] font-bold uppercase text-muted-foreground">Risk miles</p>

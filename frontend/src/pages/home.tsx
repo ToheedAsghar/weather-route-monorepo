@@ -12,6 +12,7 @@ import ForecastSlider from "@/molecules/forecast-slider";
 import { RouteMap } from "@/molecules/route-map";
 import { checkRoutingEngineHealth, pollRouteJob, RoutingEngineOfflineError, submitRouteJob } from "@/repositories/api/route-service";
 import LocationAutocomplete from "@/molecules/location-autocomplete";
+import { API_CONFIG, PLANNER_DEFAULTS, RISK_LEGEND_ITEMS } from "@/constants";
 import type { Checkpoint, GeoLocation, RouteOption, RouteRequest } from "@/common/types";
 
 type PlannerState = "idle" | "loading" | "success" | "error";
@@ -20,7 +21,7 @@ export function HomePage(): React.ReactElement {
   const [routes, setRoutes] = useState<RouteOption[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState("");
   const [selectedCheckpoint, setSelectedCheckpoint] = useState<Checkpoint>();
-  const [forecastHour, setForecastHour] = useState(18);
+  const [forecastHour, setForecastHour] = useState<number>(PLANNER_DEFAULTS.FORECAST_HOUR);
   const [departureDate, setDepartureDate] = useState<Date | null>(null);
   const [departureTime, setDepartureTime] = useState("");
   const [loadWeight, setLoadWeight] = useState("");
@@ -73,7 +74,7 @@ export function HomePage(): React.ReactElement {
         setError("");
         setState("idle");
       }
-    }, 5000);
+    }, API_CONFIG.HEALTH_CHECK_INTERVAL_MS);
     return () => window.clearInterval(interval);
   }, [isSystemOffline]);
 
@@ -382,16 +383,10 @@ export function HomePage(): React.ReactElement {
             </div>
           </div>
           <div className="pointer-events-auto flex flex-wrap gap-1 rounded-md border border-border bg-panel/95 p-1.5 shadow-card backdrop-blur-md">
-            {[
-              ["Low", "bg-success"],
-              ["Moderate", "bg-warning"],
-              ["High", "bg-high"],
-              ["Severe", "bg-danger"],
-              ["No travel", "bg-no-travel"],
-            ].map(([label, color]) => (
-              <span key={label} className="flex items-center gap-1 px-1.5 py-1 text-[10px] font-bold">
-                <i className={`size-2 rounded-full ${color}`} />
-                {label}
+            {RISK_LEGEND_ITEMS.map((item) => (
+              <span key={item.level} className="flex items-center gap-1 px-1.5 py-1 text-[10px] font-bold">
+                <i className={`size-2 rounded-full ${item.badgeClass}`} />
+                {item.label}
               </span>
             ))}
           </div>
