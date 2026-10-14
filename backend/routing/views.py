@@ -15,13 +15,15 @@ from .serializers import (
 )
 from .services.geocoding_service import GeocodingService
 from .tasks import evaluate_route_weather
-from .throttles import GeocodeIpRateThrottle
+from .throttles import GeocodeIpRateThrottle, RouteEvaluationGatewayThrottle
 
 logger = logging.getLogger(__name__)
 
 
 class RouteEvaluationGatewayView(APIView):
     """API Gateway endpoint to initiate async route evaluation."""
+
+    throttle_classes = [RouteEvaluationGatewayThrottle]
 
     def post(self, request: Request) -> Response:
         """Accepts origin, destination, departure datetime, and load weight.

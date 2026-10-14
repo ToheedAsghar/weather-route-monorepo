@@ -66,3 +66,51 @@ class TestEvaluateRouteWeatherTask:
 
         # Should cleanly return without crashing
         evaluate_route_weather(str(uuid.uuid4()))
+
+    def test_evaluate_route_weather_with_cached_checkpoints(self, mocker, mock_cache_manager):
+        # Create a pending job
+        job = RouteEvaluationJob.objects.create(
+            origin={"lat": 41.8781, "lon": -87.6298, "address": "Chicago, IL"},
+            destination={"lat": 40.7128, "lon": -74.0060, "address": "New York, NY"},
+            departure_time=datetime(2026, 10, 15, 8, 0, 0, tzinfo=timezone.utc),
+            load_weight_lbs=30000,
+            checkpoint_interval_miles=25,
+            status=JobStatus.PENDING,
+        )
+
+        mocker.patch(
+            "routing.tasks.WeatherCacheManager",
+            return_value=mock_cache_manager,
+        )
+
+        mock_tomorrow = mocker.patch("routing.tasks.TomorrowService")
+        mock_tomorrow.return_value.fetch_weather.return_value = {
+            "temperature_f": 60.0,
+            "wind_speed_mph": 15.0,
+            "wind_gust_mph": 20.0,
+            "rain_intensity_in_hr": 0.0,
+            "snow_intensity_in_hr": 0.0,
+            "weather_code": 1000,
+        }
+
+        # First run populates the cache
+        evaluate_route_weather(str(job.id))
+        initial_fetch_count = mock_tomorrow.return_value.fetch_weather.call_count
+        assert initial_fetch_count > 0
+
+        # Second job with same route and time should hit the cache for all checkpoints
+        job2 = RouteEvaluationJob.objects.create(
+            origin={"lat": 41.8781, "lon": -87.6298, "address": "Chicago, IL"},
+            destination={"lat": 40.7128, "lon": -74.0060, "address": "New York, NY"},
+            departure_time=datetime(2026, 10, 15, 8, 0, 0, tzinfo=timezone.utc),
+            load_weight_lbs=30000,
+            checkpoint_interval_miles=25,
+            status=JobStatus.PENDING,
+        )
+        evaluate_route_weather(str(job2.id))
+
+        # Call count should not increase because of 100% cache hit
+        assert mock_tomorrow.return_value.fetch_weather.call_count == initial_fetch_count
+        job2.refresh_from_db()
+        assert job2.status == JobStatus.SUCCESS
+

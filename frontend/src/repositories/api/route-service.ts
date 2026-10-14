@@ -97,7 +97,7 @@ export async function submitRouteJob(request: RouteRequest, signal?: AbortSignal
     origin: originCoord,
     destination: destCoord,
     departure_time: departureIso,
-    load_weight_lbs: request.load_weight_lbs || 42000,
+    load_weight_lbs: request.load_weight_lbs,
     checkpoint_interval_miles: 25,
   };
 

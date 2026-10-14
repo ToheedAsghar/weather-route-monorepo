@@ -211,6 +211,19 @@ function RouteMapComponent({
           const cp = routesRef.current.flatMap((r) => r.checkpoints).find((item) => item.id === id);
           if (cp) callbackRef.current(cp);
         });
+
+        // If routes already exist when style finishes loading, fit viewport bounds immediately
+        const readyRoute = routesRef.current.find((r) => r.id === selectedRouteId) || routesRef.current[0];
+        if (readyRoute && readyRoute.segments.length > 0) {
+          const allCoords = readyRoute.segments.flatMap((s) => s.coordinates);
+          if (allCoords.length > 1) {
+            const bounds = new mapboxgl.LngLatBounds(allCoords[0], allCoords[0]);
+            for (const pt of allCoords) {
+              bounds.extend(pt as [number, number]);
+            }
+            map.fitBounds(bounds, { padding: 70, duration: 1200, maxZoom: 11 });
+          }
+        }
       });
     });
 
