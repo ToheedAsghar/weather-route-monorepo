@@ -27,10 +27,19 @@ app.conf.update(
     timezone="UTC",
     enable_utc=True,
     task_track_started=True,
-    task_time_limit=300,  # 5 minutes hard limit
-    task_soft_time_limit=240,  # 4 minutes soft limit
+    task_acks_late=True,
+    task_reject_on_worker_lost=True,
+    broker_transport_options={
+        "visibility_timeout": 180,  # 3 minutes (must exceed task_time_limit of 90s)
+    },
+    task_time_limit=90,
+    task_soft_time_limit=60,
+    result_expires=86400,
+    task_ignore_result=True,  # Persisted directly in database
+    worker_max_tasks_per_child=100,
     broker_pool_limit=10,  # Connection pool limit for Upstash serverless Redis
-    result_expires=86400,  # 24 hours result expiration
+    broker_connection_retry_on_startup=True,
+    worker_prefetch_multiplier=1,  # Prevents worker from taking too many tasks
 )
 
 # Auto-discover tasks in installed apps
