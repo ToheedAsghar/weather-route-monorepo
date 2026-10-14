@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState, type FormEvent } from "react";
 import { format } from "date-fns";
-import { ChevronRight, Loader2, MapPin, Navigation, Package, Route as RouteIcon, TriangleAlert } from "lucide-react";
+import { ChevronRight, Loader2, MapPin, Navigation, Package, RefreshCw, Route as RouteIcon, TriangleAlert } from "lucide-react";
 import { Button } from "@/atoms/button";
 import Layout from "@/layout";
 import Field from "@/molecules/field";
@@ -10,7 +10,7 @@ import RouteSkeleton from "@/molecules/route-skeleton";
 import CheckpointCard from "@/molecules/checkpoint-card";
 import ForecastSlider from "@/molecules/forecast-slider";
 import { RouteMap } from "@/molecules/route-map";
-import { pollRouteJob, submitRouteJob } from "@/repositories/api/route-service";
+import { checkRoutingEngineHealth, pollRouteJob, RoutingEngineOfflineError, submitRouteJob } from "@/repositories/api/route-service";
 import LocationAutocomplete from "@/molecules/location-autocomplete";
 import type { Checkpoint, GeoLocation, RouteOption, RouteRequest } from "@/common/types";
 
@@ -28,7 +28,27 @@ export function HomePage(): React.ReactElement {
   const [destinationLocation, setDestinationLocation] = useState<GeoLocation | undefined>(undefined);
   const [state, setState] = useState<PlannerState>("idle");
   const [error, setError] = useState("");
+  const [isSystemOffline, setIsSystemOffline] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const abortRef = useRef<AbortController | undefined>(undefined);
+
+  const handleSystemOffline = useCallback(() => {
+    setIsSystemOffline(true);
+  }, []);
+
+  const handleRetryConnection = useCallback(async () => {
+    setIsRetrying(true);
+    try {
+      const healthy = await checkRoutingEngineHealth();
+      if (healthy) {
+        setIsSystemOffline(false);
+        setError("");
+        setState("idle");
+      }
+    } finally {
+      setIsRetrying(false);
+    }
+  }, []);
 
   const departure = useMemo(() => {
     if (!departureDate || !departureTime) return "";
@@ -70,6 +90,9 @@ export function HomePage(): React.ReactElement {
       setState("success");
     } catch (caught) {
       if (caught instanceof DOMException && caught.name === "AbortError") return;
+      if (caught instanceof RoutingEngineOfflineError) {
+        setIsSystemOffline(true);
+      }
       setError(caught instanceof Error ? caught.message : "Unable to evaluate route");
       setState("error");
     }
@@ -151,12 +174,39 @@ export function HomePage(): React.ReactElement {
               </div>
               <RouteIcon className="size-5 text-primary" />
             </div>
+            {isSystemOffline && (
+              <div
+                role="alert"
+                className="mb-4 flex items-start gap-3 rounded-xl border border-red-500/40 bg-red-500/10 p-3.5 text-xs text-red-600 shadow-sm backdrop-blur-sm dark:border-red-500/30 dark:bg-red-950/40 dark:text-red-400"
+              >
+                <div className="grid size-5 shrink-0 place-items-center rounded-full bg-red-600 text-white shadow-sm">
+                  <TriangleAlert className="size-3.5 stroke-[2.5]" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-extrabold tracking-tight">System Offline: Cannot connect to routing engine.</p>
+                  <p className="mt-1 text-[11px] font-medium leading-relaxed text-red-700/80 dark:text-red-300/80">
+                    Direct geocoding fallback is disabled. All route inputs are locked until connectivity to the Django routing backend is restored.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleRetryConnection}
+                    disabled={isRetrying}
+                    className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1 text-[11px] font-bold text-white transition hover:bg-red-700 disabled:opacity-60"
+                  >
+                    <RefreshCw className={`size-3 ${isRetrying ? "animate-spin" : ""}`} />
+                    {isRetrying ? "Reconnecting…" : "Retry connection"}
+                  </button>
+                </div>
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-4">
               <LocationAutocomplete
                 label="Origin"
                 icon={<MapPin />}
                 value={originLocation}
                 onSelect={handleOriginSelect}
+                disabled={isSystemOffline}
+                onOffline={handleSystemOffline}
                 required
               />
               <LocationAutocomplete
@@ -164,6 +214,8 @@ export function HomePage(): React.ReactElement {
                 icon={<Navigation />}
                 value={destinationLocation}
                 onSelect={handleDestinationSelect}
+                disabled={isSystemOffline}
+                onOffline={handleSystemOffline}
                 required
               />
               <DepartureField
@@ -171,18 +223,20 @@ export function HomePage(): React.ReactElement {
                 time={departureTime}
                 onDate={setDepartureDate}
                 onTime={setDepartureTime}
+                disabled={isSystemOffline}
               />
-              <Field icon={<Package />} label="Load weight">
+              <Field icon={<Package />} label="Load weight" disabled={isSystemOffline}>
                 <div className="flex items-center">
                   <input
                     name="weight"
                     type="number"
                     required
+                    disabled={isSystemOffline}
                     placeholder="Enter weight in lbs (e.g. 42000)"
                     min="1"
                     value={loadWeight}
                     onChange={(e) => setLoadWeight(e.target.value)}
-                    className="min-w-0 flex-1 bg-transparent font-semibold outline-none placeholder:text-muted-foreground/50 placeholder:font-normal"
+                    className="min-w-0 flex-1 bg-transparent font-semibold outline-none placeholder:text-muted-foreground/50 placeholder:font-normal disabled:cursor-not-allowed"
                   />
                   <span className="text-xs font-bold text-muted-foreground">lbs</span>
                 </div>
@@ -190,8 +244,8 @@ export function HomePage(): React.ReactElement {
 
               <Button
                 type="submit"
-                disabled={state === "loading"}
-                className="group relative inline-flex h-12 w-full items-center justify-between gap-2 overflow-hidden rounded-full bg-primary px-5 pl-4 text-sm font-extrabold text-primary-foreground shadow-none transition-all hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:translate-y-px disabled:cursor-wait disabled:opacity-70"
+                disabled={isSystemOffline || state === "loading"}
+                className="group relative inline-flex h-12 w-full items-center justify-between gap-2 overflow-hidden rounded-full bg-primary px-5 pl-4 text-sm font-extrabold text-primary-foreground shadow-none transition-all hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <span className="flex items-center gap-2.5">
                   <span className="grid size-6 shrink-0 place-items-center rounded-full bg-background/15 text-background transition-colors group-hover:bg-background/25">

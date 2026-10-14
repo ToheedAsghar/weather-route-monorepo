@@ -6,46 +6,44 @@ const ROUTE_URL = API_BASE ? `${API_BASE}/api/route/` : "/api/route/";
 const POLL_URL = (id: string) => (API_BASE ? `${API_BASE}/api/route/${encodeURIComponent(id)}/` : `/api/route/${encodeURIComponent(id)}/`);
 const AUTOCOMPLETE_URL = API_BASE ? `${API_BASE}/api/geocode/autocomplete/` : "/api/geocode/autocomplete/";
 
+export class RoutingEngineOfflineError extends Error {
+  constructor(message = "System Offline: Cannot connect to routing engine.") {
+    super(message);
+    this.name = "RoutingEngineOfflineError";
+  }
+}
+
+export async function checkRoutingEngineHealth(signal?: AbortSignal): Promise<boolean> {
+  try {
+    const url = `${AUTOCOMPLETE_URL}?q=check`;
+    const response = await fetch(url, { signal: signal ?? null });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function searchLocations(query: string, signal?: AbortSignal): Promise<LocationSuggestion[]> {
   const clean = query.trim();
   if (clean.length < 3) return [];
 
-  // 1. Query backend endpoint with Redis caching & IP rate limit
+  // Strictly query backend endpoint with Redis caching & IP rate limit.
+  // Direct client-side Mapbox geocoding calls are strictly forbidden.
+  const url = `${AUTOCOMPLETE_URL}?q=${encodeURIComponent(clean)}`;
+  let response: Response;
   try {
-    const url = `${AUTOCOMPLETE_URL}?q=${encodeURIComponent(clean)}`;
-    const response = await fetch(url, { signal: signal ?? null });
-    if (response.ok) {
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) return data;
-    }
+    response = await fetch(url, { signal: signal ?? null });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") throw error;
-    console.warn("Backend geocode lookup failed; trying client fallback.", error);
+    throw new RoutingEngineOfflineError();
   }
 
-  // 2. Client-side fallback if backend is offline
-  const token = (import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || import.meta.env.VITE_MAPBOX_TOKEN) as string | undefined;
-  if (token) {
-    try {
-      const mapboxUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(clean)}.json?access_token=${token}&autocomplete=true&limit=6`;
-      const res = await fetch(mapboxUrl, { signal: signal ?? null });
-      if (res.ok) {
-        const geo = await res.json();
-        return (geo.features || [])
-          .filter((f: any) => Array.isArray(f.center) && f.center.length >= 2)
-          .map((f: any) => ({
-            id: f.id,
-            place_name: f.place_name,
-            text: f.text,
-            lat: f.center[1],
-            lon: f.center[0],
-          }));
-      }
-    } catch (e) {
-      if (e instanceof DOMException && e.name === "AbortError") throw e;
-    }
+  if (!response.ok) {
+    throw new RoutingEngineOfflineError();
   }
 
+  const data = await response.json();
+  if (Array.isArray(data)) return data;
   return [];
 }
 
@@ -101,14 +99,23 @@ export async function submitRouteJob(request: RouteRequest, signal?: AbortSignal
     checkpoint_interval_miles: 25,
   };
 
-  const response = await fetch(ROUTE_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-    signal: signal ?? null,
-  });
+  let response: Response;
+  try {
+    response = await fetch(ROUTE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: signal ?? null,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    throw new RoutingEngineOfflineError();
+  }
 
   if (!response.ok) {
+    if (response.status >= 500) {
+      throw new RoutingEngineOfflineError();
+    }
     const errorText = await response.text();
     let msg = `Server returned HTTP ${response.status}`;
     try {
@@ -129,8 +136,18 @@ export async function submitRouteJob(request: RouteRequest, signal?: AbortSignal
 }
 
 export async function getRouteJob(jobId: string, attempt: number, signal?: AbortSignal): Promise<RouteJobResponse> {
-  const response = await fetch(POLL_URL(jobId), { signal: signal ?? null });
+  let response: Response;
+  try {
+    response = await fetch(POLL_URL(jobId), { signal: signal ?? null });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    throw new RoutingEngineOfflineError();
+  }
+
   if (!response.ok) {
+    if (response.status >= 500) {
+      throw new RoutingEngineOfflineError();
+    }
     throw new Error(`Failed to check route job status (HTTP ${response.status})`);
   }
 

@@ -10,6 +10,8 @@ interface LocationAutocompleteProps {
   value?: GeoLocation;
   onSelect: (location: GeoLocation | undefined) => void;
   required?: boolean;
+  disabled?: boolean;
+  onOffline?: (error: Error) => void;
 }
 
 export function LocationAutocomplete({
@@ -19,6 +21,8 @@ export function LocationAutocomplete({
   value,
   onSelect,
   required = true,
+  disabled = false,
+  onOffline,
 }: LocationAutocompleteProps): React.ReactElement {
   const [query, setQuery] = useState(value?.address ?? "");
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
@@ -42,6 +46,7 @@ export function LocationAutocomplete({
   // Handle typing with 300ms debounce, >= 3 chars, and AbortController cancellation
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (disabled) return;
       const text = event.target.value;
       setQuery(text);
       setSelectedIndex(-1);
@@ -88,12 +93,16 @@ export function LocationAutocomplete({
             return;
           }
           setSuggestions([]);
+          setIsOpen(false);
+          if (err instanceof Error) {
+            onOffline?.(err);
+          }
         } finally {
           setIsLoading(false);
         }
       }, 300);
     },
-    [onSelect]
+    [disabled, onOffline, onSelect]
   );
 
   const handleSelectSuggestion = useCallback(
@@ -179,21 +188,28 @@ export function LocationAutocomplete({
         <span className="mb-1.5 block text-[10px] font-extrabold uppercase text-muted-foreground">
           {label}
         </span>
-        <span className="relative flex h-11 items-center gap-2 rounded-full border border-border bg-input-surface px-4 text-sm transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
+        <span
+          className={`relative flex h-11 items-center gap-2 rounded-full border border-border bg-input-surface px-4 text-sm transition ${
+            disabled
+              ? "cursor-not-allowed opacity-60 bg-muted/30"
+              : "focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10"
+          }`}
+        >
           <span className="text-muted-foreground [&>svg]:size-3.5">{icon}</span>
           <input
             type="text"
+            disabled={disabled}
             value={query}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
             onFocus={() => {
-              if (suggestions.length > 0) setIsOpen(true);
+              if (!disabled && suggestions.length > 0) setIsOpen(true);
             }}
-            placeholder={placeholder || `Enter ${label.toLowerCase()}...`}
+            placeholder={disabled ? "Routing engine offline..." : placeholder || `Enter ${label.toLowerCase()}...`}
             required={required}
             autoComplete="off"
-            className="min-w-0 flex-1 bg-transparent font-semibold outline-none placeholder:text-muted-foreground/60"
+            className="min-w-0 flex-1 bg-transparent font-semibold outline-none placeholder:text-muted-foreground/60 disabled:cursor-not-allowed"
           />
           {isLoading && <Loader2 className="size-3.5 animate-spin text-muted-foreground" />}
           {!isLoading && query && (

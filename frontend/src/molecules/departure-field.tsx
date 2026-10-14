@@ -16,13 +16,15 @@ interface DepartureFieldProps {
   time: string;
   onDate: (date: Date | null) => void;
   onTime: (time: string) => void;
+  disabled?: boolean;
 }
 
-export function DepartureField({ date, time, onDate, onTime }: DepartureFieldProps): React.ReactElement {
+export function DepartureField({ date, time, onDate, onTime, disabled = false }: DepartureFieldProps): React.ReactElement {
   const [hour = "06", minute = "00"] = (time || "06:00").split(":");
   const clock = format(new Date(2026, 0, 1, Number(hour), Number(minute)), "h:mm a");
 
   const handleSetNow = () => {
+    if (disabled) return;
     const now = new Date();
     const h = String(now.getHours()).padStart(2, "0");
     const m = String(Math.floor(now.getMinutes() / 15) * 15).padStart(2, "0");
@@ -32,6 +34,7 @@ export function DepartureField({ date, time, onDate, onTime }: DepartureFieldPro
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (disabled) return;
     onDate(null);
     onTime("");
   };
@@ -45,8 +48,13 @@ export function DepartureField({ date, time, onDate, onTime }: DepartureFieldPro
         <PopoverTrigger asChild>
           <button
             type="button"
+            disabled={disabled}
             aria-label="Departure date and time"
-            className="flex h-11 w-full items-center gap-2 rounded-full border border-border bg-input-surface px-4 text-sm transition-colors hover:border-border-strong focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/10"
+            className={`flex h-11 w-full items-center gap-2 rounded-full border border-border bg-input-surface px-4 text-sm transition-colors ${
+              disabled
+                ? "cursor-not-allowed opacity-60 bg-muted/30"
+                : "hover:border-border-strong focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/10"
+            }`}
           >
             <span className="text-muted-foreground [&>svg]:size-3.5">
               <Clock3 />
