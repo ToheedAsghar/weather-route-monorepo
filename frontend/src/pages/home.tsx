@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState, type FormEvent } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { format } from "date-fns";
 import { ChevronRight, Loader2, MapPin, Navigation, Package, RefreshCw, Route as RouteIcon, TriangleAlert } from "lucide-react";
 import { Button } from "@/atoms/button";
@@ -49,6 +49,33 @@ export function HomePage(): React.ReactElement {
       setIsRetrying(false);
     }
   }, []);
+
+  // Check health on initial mount
+  useEffect(() => {
+    let mounted = true;
+    checkRoutingEngineHealth().then((healthy) => {
+      if (mounted && !healthy) {
+        setIsSystemOffline(true);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Automatically reconnect once backend is back online
+  useEffect(() => {
+    if (!isSystemOffline) return;
+    const interval = window.setInterval(async () => {
+      const healthy = await checkRoutingEngineHealth();
+      if (healthy) {
+        setIsSystemOffline(false);
+        setError("");
+        setState("idle");
+      }
+    }, 5000);
+    return () => window.clearInterval(interval);
+  }, [isSystemOffline]);
 
   const departure = useMemo(() => {
     if (!departureDate || !departureTime) return "";
@@ -177,26 +204,29 @@ export function HomePage(): React.ReactElement {
             {isSystemOffline && (
               <div
                 role="alert"
-                className="mb-4 flex items-start gap-3 rounded-xl border border-red-500/40 bg-red-500/10 p-3.5 text-xs text-red-600 shadow-sm backdrop-blur-sm dark:border-red-500/30 dark:bg-red-950/40 dark:text-red-400"
+                className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-border bg-input-surface px-3.5 py-2.5 shadow-xs"
               >
-                <div className="grid size-5 shrink-0 place-items-center rounded-full bg-red-600 text-white shadow-sm">
-                  <TriangleAlert className="size-3.5 stroke-[2.5]" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="relative flex size-2 shrink-0">
+                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-danger opacity-75" />
+                    <span className="relative inline-flex size-2 rounded-full bg-danger" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold leading-tight text-primary">System offline</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      {isRetrying ? "Connecting to backend…" : "Backend unreachable"}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="font-extrabold tracking-tight">System Offline: Cannot connect to routing engine.</p>
-                  <p className="mt-1 text-[11px] font-medium leading-relaxed text-red-700/80 dark:text-red-300/80">
-                    Direct geocoding fallback is disabled. All route inputs are locked until connectivity to the Django routing backend is restored.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleRetryConnection}
-                    disabled={isRetrying}
-                    className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1 text-[11px] font-bold text-white transition hover:bg-red-700 disabled:opacity-60"
-                  >
-                    <RefreshCw className={`size-3 ${isRetrying ? "animate-spin" : ""}`} />
-                    {isRetrying ? "Reconnecting…" : "Retry connection"}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleRetryConnection}
+                  disabled={isRetrying}
+                  className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-panel px-3 py-1 text-[11px] font-bold text-primary shadow-xs transition hover:border-border-strong hover:bg-background active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <RefreshCw className={`size-3 text-muted-foreground ${isRetrying ? "animate-spin text-primary" : ""}`} />
+                  <span>{isRetrying ? "Checking…" : "Retry"}</span>
+                </button>
               </div>
             )}
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -300,7 +330,7 @@ export function HomePage(): React.ReactElement {
 
             {state === "loading" && <RouteSkeleton />}
 
-            {state === "error" && (
+            {state === "error" && !isSystemOffline && (
               <div className="rounded-md border border-danger/20 bg-danger-soft p-4">
                 <div className="flex gap-2 text-sm font-bold text-danger">
                   <TriangleAlert className="size-4 shrink-0" /> Route unavailable
