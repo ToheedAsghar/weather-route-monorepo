@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="8" fill="#101114" />
+  <g transform="translate(4, 4)">
+    <polygon
+      points="3 11 22 2 13 21 11 13 3 11"
+      fill="#3a3af4"
+      stroke="#ffffff"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </g>
+</svg>
