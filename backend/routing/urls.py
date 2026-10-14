@@ -2,7 +2,11 @@
 
 from django.urls import path
 
-from .views import RouteEvaluationGatewayView, RouteEvaluationPollingView
+from .views import (
+    GeocodeAutocompleteView,
+    RouteEvaluationGatewayView,
+    RouteEvaluationPollingView,
+)
 
 app_name = "routing"
 
@@ -12,5 +16,10 @@ urlpatterns = [
         "route/<uuid:job_id>/",
         RouteEvaluationPollingView.as_view(),
         name="route-polling",
+    ),
+    path(
+        "geocode/autocomplete/",
+        GeocodeAutocompleteView.as_view(),
+        name="geocode-autocomplete",
     ),
 ]

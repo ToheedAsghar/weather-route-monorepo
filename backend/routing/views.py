@@ -13,7 +13,9 @@ from .serializers import (
     RouteEvaluationJobResponseSerializer,
     RouteEvaluationRequestSerializer,
 )
+from .services.geocoding_service import GeocodingService
 from .tasks import evaluate_route_weather
+from .throttles import GeocodeIpRateThrottle
 
 logger = logging.getLogger(__name__)
 
@@ -64,3 +66,20 @@ class RouteEvaluationPollingView(APIView):
             job, context={"request": request}
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class GeocodeAutocompleteView(APIView):
+    """Autocomplete location search with backend Redis query caching and IP rate limiting."""
+
+    throttle_classes = [GeocodeIpRateThrottle]
+
+    def get(self, request: Request) -> Response:
+        """Returns location autocomplete suggestions."""
+        query = request.query_params.get("q", "").strip()
+        if len(query) < 3:
+            return Response([], status=status.HTTP_200_OK)
+
+        service = GeocodingService()
+        suggestions = service.search_places(query)
+        return Response(suggestions, status=status.HTTP_200_OK)
+
