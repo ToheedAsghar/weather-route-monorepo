@@ -33,9 +33,7 @@ class RouteEvaluationJob(models.Model):
     origin = models.JSONField(help_text=HELP_TEXT_COORDINATE_JSON)
     destination = models.JSONField(help_text=HELP_TEXT_COORDINATE_JSON)
     departure_time = models.DateTimeField(help_text=HELP_TEXT_DEPARTURE_TIME)
-    load_weight_lbs = models.PositiveIntegerField(
-        help_text=HELP_TEXT_LOAD_WEIGHT_LBS
-    )
+    load_weight_lbs = models.PositiveIntegerField(help_text=HELP_TEXT_LOAD_WEIGHT_LBS)
     checkpoint_interval_miles = models.PositiveIntegerField(
         default=DEFAULT_CHECKPOINT_INTERVAL_MILES,
         help_text=HELP_TEXT_CHECKPOINT_INTERVAL,
@@ -76,18 +74,14 @@ class RouteEvaluationJob(models.Model):
         self.status = JobStatus.SUCCESS
         self.result_payload = payload
         self.completed_at = timezone.now()
-        self.save(
-            update_fields=["status", "result_payload", "completed_at", "updated_at"]
-        )
+        self.save(update_fields=["status", "result_payload", "completed_at", "updated_at"])
 
     def mark_failed(self, error: str):
         """Update job status to FAILED with error message."""
         self.status = JobStatus.FAILED
         self.error_message = error
         self.completed_at = timezone.now()
-        self.save(
-            update_fields=["status", "error_message", "completed_at", "updated_at"]
-        )
+        self.save(update_fields=["status", "error_message", "completed_at", "updated_at"])
 
     def __str__(self):
         return f"RouteEvaluationJob {self.id} [{self.status}]"

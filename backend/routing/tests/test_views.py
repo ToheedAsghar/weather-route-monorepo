@@ -77,3 +77,10 @@ class TestRouteViews:
         random_id = uuid.uuid4()
         response = self.client.get(f"/api/route/{random_id}/")
         assert response.status_code == 404
+
+    def test_get_health_check_endpoint(self):
+        response = self.client.get("/api/health/")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+        assert data["service"] == "weather-truck-routing"

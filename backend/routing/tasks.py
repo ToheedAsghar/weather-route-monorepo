@@ -114,6 +114,7 @@ def evaluate_route_weather(self, job_id: str):
                 misses.append((geohash, rounded_eta, lat, lon))
 
         if misses:
+
             def _fetch_single_checkpoint(gh: str, eta: str, lat_val: float, lon_val: float):
                 # Double-check cache in case another worker already populated it
                 data = cache_manager.get_weather(gh, eta)
@@ -121,9 +122,7 @@ def evaluate_route_weather(self, job_id: str):
                     return (gh, eta), data
 
                 worker_token = str(uuid.uuid4())
-                lock_acquired = cache_manager.acquire_lock(
-                    gh, eta, worker_token, timeout_ms=8000
-                )
+                lock_acquired = cache_manager.acquire_lock(gh, eta, worker_token, timeout_ms=8000)
                 if lock_acquired:
                     try:
                         data = tomorrow_service.fetch_weather(
@@ -149,9 +148,7 @@ def evaluate_route_weather(self, job_id: str):
             max_workers = min(len(misses), 8)
             with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
                 future_to_key = {
-                    executor.submit(
-                        _fetch_single_checkpoint, gh, eta, lat_val, lon_val
-                    ): (gh, eta)
+                    executor.submit(_fetch_single_checkpoint, gh, eta, lat_val, lon_val): (gh, eta)
                     for gh, eta, lat_val, lon_val in misses
                 }
                 for future in concurrent.futures.as_completed(future_to_key):

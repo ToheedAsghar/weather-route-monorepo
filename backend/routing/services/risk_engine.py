@@ -111,8 +111,7 @@ class RiskEngine:
         elif 35.0 <= wind_mph < 45.0 and load_weight_lbs > 40000:
             hazard_levels.append(RiskLevel.SEVERE)
             load_warning = (
-                f"Wind ({wind_mph:.1f} mph) with load {load_weight_lbs:,} lbs "
-                "(> 40,000 lbs): Escalated to SEVERE."
+                f"Wind ({wind_mph:.1f} mph) with load {load_weight_lbs:,} lbs " "(> 40,000 lbs): Escalated to SEVERE."
             )
 
         # Pick worst level among all hazards and load rules

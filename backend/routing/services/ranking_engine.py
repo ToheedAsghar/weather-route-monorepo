@@ -80,9 +80,7 @@ class RankingEngine:
         }
 
     @classmethod
-    def rank_routes(
-        cls, evaluated_routes: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def rank_routes(cls, evaluated_routes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Rank routes according to:
         1. Fewest Severe miles (and No Travel miles)
@@ -94,9 +92,7 @@ class RankingEngine:
         def ranking_key(route: Dict[str, Any]):
             rb = route.get("risk_breakdown", {})
             # Treat No Travel miles as highest penalty + severe miles
-            penalty_severe = rb.get("no_travel_miles", 0.0) * 100.0 + rb.get(
-                "severe_miles", 0.0
-            )
+            penalty_severe = rb.get("no_travel_miles", 0.0) * 100.0 + rb.get("severe_miles", 0.0)
             return (
                 penalty_severe,
                 rb.get("high_miles", 0.0),

@@ -11,6 +11,7 @@ const POLL_URL = (id: string) =>
 const AUTOCOMPLETE_URL = API_BASE
   ? `${API_BASE}${API_CONFIG.ENDPOINTS.AUTOCOMPLETE}`
   : API_CONFIG.ENDPOINTS.AUTOCOMPLETE;
+const HEALTH_URL = API_BASE ? `${API_BASE}${API_CONFIG.ENDPOINTS.HEALTH}` : API_CONFIG.ENDPOINTS.HEALTH;
 
 export class RoutingEngineOfflineError extends Error {
   constructor(message = "System Offline: Cannot connect to routing engine.") {
@@ -21,8 +22,7 @@ export class RoutingEngineOfflineError extends Error {
 
 export async function checkRoutingEngineHealth(signal?: AbortSignal): Promise<boolean> {
   try {
-    const url = `${AUTOCOMPLETE_URL}?q=check`;
-    const response = await fetch(url, { signal: signal ?? null });
+    const response = await fetch(HEALTH_URL, { signal: signal ?? null });
     return response.ok;
   } catch {
     return false;

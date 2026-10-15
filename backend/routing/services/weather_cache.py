@@ -25,9 +25,7 @@ class WeatherCacheManager:
         if client is not None:
             self.client = client
         else:
-            redis_url = getattr(
-                settings, "UPSTASH_REDIS_URL", "redis://localhost:6379/0"
-            )
+            redis_url = getattr(settings, "UPSTASH_REDIS_URL", "redis://localhost:6379/0")
             self.client = redis.from_url(redis_url, decode_responses=True)
         self.default_ttl = 10800  # 3 hours in seconds
 
@@ -41,9 +39,7 @@ class WeatherCacheManager:
         """Construct lock key for coordinate/time bucket."""
         return f"lock:weather:{geohash}:{rounded_eta_iso}"
 
-    def get_weather(
-        self, geohash: str, rounded_eta_iso: str
-    ) -> Optional[Dict[str, Any]]:
+    def get_weather(self, geohash: str, rounded_eta_iso: str) -> Optional[Dict[str, Any]]:
         """Retrieve cached weather forecast payload."""
         key = self.build_cache_key(geohash, rounded_eta_iso)
         try:
@@ -70,9 +66,7 @@ class WeatherCacheManager:
             logger.warning(f"Cache set error for {key}: {exc}")
             return False
 
-    def acquire_lock(
-        self, geohash: str, rounded_eta_iso: str, token: str, timeout_ms: int = 10000
-    ) -> bool:
+    def acquire_lock(self, geohash: str, rounded_eta_iso: str, token: str, timeout_ms: int = 10000) -> bool:
         """Acquire distributed lock using SET NX PX to serialize API calls."""
         lock_key = self.build_lock_key(geohash, rounded_eta_iso)
         try:

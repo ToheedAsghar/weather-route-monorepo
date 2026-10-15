@@ -17,12 +17,11 @@ class TomorrowService:
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or getattr(settings, "TOMORROW_IO_API_KEY", "")
 
-    def fetch_weather(
-        self, lat: float, lon: float, target_time_iso: str
-    ) -> Dict[str, Any]:
+    def fetch_weather(self, lat: float, lon: float, target_time_iso: str) -> Dict[str, Any]:
         """Fetch timeline weather for coordinate and target time in imperial units."""
         if not self.api_key or "your_" in self.api_key.lower() or "placeholder" in self.api_key.lower():
             import hashlib
+
             seed = int(hashlib.md5(f"{lat:.2f},{lon:.2f}".encode()).hexdigest(), 16)
             wind = 12.0 + (seed % 35)
             rain = 0.45 if (seed % 4 == 0) else 0.0
@@ -62,9 +61,7 @@ class TomorrowService:
                     "temperature_f": float(values.get("temperature", 60.0)),
                     "wind_speed_mph": float(values.get("windSpeed", 0.0)),
                     "wind_gust_mph": float(values.get("windGust", 0.0)),
-                    "rain_intensity_in_hr": float(
-                        values.get("precipitationIntensity", 0.0)
-                    ),
+                    "rain_intensity_in_hr": float(values.get("precipitationIntensity", 0.0)),
                     "snow_intensity_in_hr": float(values.get("snowIntensity", 0.0)),
                     "weather_code": int(values.get("weatherCode", 1000)),
                 }

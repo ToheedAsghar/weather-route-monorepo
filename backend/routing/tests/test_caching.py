@@ -41,31 +41,21 @@ class TestWeatherCache:
         token_worker_2 = "worker-uuid-2"
 
         # Worker 1 acquires lock
-        acquired = mock_cache_manager.acquire_lock(
-            geohash, rounded_eta, token_worker_1, timeout_ms=5000
-        )
+        acquired = mock_cache_manager.acquire_lock(geohash, rounded_eta, token_worker_1, timeout_ms=5000)
         assert acquired is True
 
         # Worker 2 attempts to acquire lock on the same cell -> should fail
-        acquired_2 = mock_cache_manager.acquire_lock(
-            geohash, rounded_eta, token_worker_2, timeout_ms=5000
-        )
+        acquired_2 = mock_cache_manager.acquire_lock(geohash, rounded_eta, token_worker_2, timeout_ms=5000)
         assert acquired_2 is False
 
         # Worker 2 attempts release with wrong token -> fails
-        released_wrong = mock_cache_manager.release_lock(
-            geohash, rounded_eta, token_worker_2
-        )
+        released_wrong = mock_cache_manager.release_lock(geohash, rounded_eta, token_worker_2)
         assert released_wrong is False
 
         # Worker 1 releases with correct token -> succeeds
-        released_correct = mock_cache_manager.release_lock(
-            geohash, rounded_eta, token_worker_1
-        )
+        released_correct = mock_cache_manager.release_lock(geohash, rounded_eta, token_worker_1)
         assert released_correct is True
 
         # Worker 2 can now acquire lock
-        acquired_after_release = mock_cache_manager.acquire_lock(
-            geohash, rounded_eta, token_worker_2, timeout_ms=5000
-        )
+        acquired_after_release = mock_cache_manager.acquire_lock(geohash, rounded_eta, token_worker_2, timeout_ms=5000)
         assert acquired_after_release is True

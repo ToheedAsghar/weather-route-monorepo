@@ -64,16 +64,12 @@ class TestRiskEngine:
 
     def test_load_rule_extreme_wind_no_travel(self):
         """Rule 1: >= 55 mph = No Travel, regardless of weight."""
-        res_light = RiskEngine.evaluate_checkpoint(
-            wind_mph=56.0, rain_in_hr=0.0, snow_in_hr=0.0, load_weight_lbs=10000
-        )
+        res_light = RiskEngine.evaluate_checkpoint(wind_mph=56.0, rain_in_hr=0.0, snow_in_hr=0.0, load_weight_lbs=10000)
         assert res_light.overall_level == RiskLevel.NO_TRAVEL
         assert res_light.numerical_score == 5
         assert res_light.load_warning is not None
 
-        res_heavy = RiskEngine.evaluate_checkpoint(
-            wind_mph=60.0, rain_in_hr=0.0, snow_in_hr=0.0, load_weight_lbs=65000
-        )
+        res_heavy = RiskEngine.evaluate_checkpoint(wind_mph=60.0, rain_in_hr=0.0, snow_in_hr=0.0, load_weight_lbs=65000)
         assert res_heavy.overall_level == RiskLevel.NO_TRAVEL
 
     def test_load_rule_severe_wind_heavy_load_no_travel(self):

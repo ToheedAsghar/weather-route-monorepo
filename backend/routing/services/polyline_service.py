@@ -63,16 +63,12 @@ class PolylineService:
         # Calculate cumulative distances along all line segments
         cum_distances = [0.0]
         for i in range(len(points) - 1):
-            seg_dist = haversine_distance_miles(
-                points[i][0], points[i][1], points[i + 1][0], points[i + 1][1]
-            )
+            seg_dist = haversine_distance_miles(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1])
             cum_distances.append(cum_distances[-1] + seg_dist)
 
         total_poly_dist = cum_distances[-1]
         # Use polyline distance if valid, else total_distance_miles
-        effective_total_miles = (
-            total_poly_dist if total_poly_dist > 0.01 else total_distance_miles
-        )
+        effective_total_miles = total_poly_dist if total_poly_dist > 0.01 else total_distance_miles
         if effective_total_miles <= 0:
             effective_total_miles = 1.0
 
@@ -92,9 +88,7 @@ class PolylineService:
                 d_start = cum_distances[idx]
                 d_end = cum_distances[idx + 1]
                 seg_length = d_end - d_start
-                fraction = (
-                    (target_dist - d_start) / seg_length if seg_length > 0 else 0.0
-                )
+                fraction = (target_dist - d_start) / seg_length if seg_length > 0 else 0.0
                 lat, lon = interpolate_coordinates(
                     points[idx][0],
                     points[idx][1],
@@ -124,11 +118,7 @@ class PolylineService:
 
         # Ensure the destination endpoint is included if not close to
         # the last checkpoint
-        if (
-            not checkpoints
-            or checkpoints[-1]["distance_from_origin_miles"]
-            < effective_total_miles - 2.0
-        ):
+        if not checkpoints or checkpoints[-1]["distance_from_origin_miles"] < effective_total_miles - 2.0:
             dest_lat, dest_lon = points[-1]
             dest_eta = departure_time + timedelta(seconds=total_duration_seconds)
             checkpoints.append(

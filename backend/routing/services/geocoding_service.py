@@ -31,9 +31,7 @@ class GeocodingService:
         else:
             self.redis = self._get_pooled_client()
 
-        self.access_token = access_token or getattr(
-            settings, "MAPBOX_ACCESS_TOKEN", ""
-        )
+        self.access_token = access_token or getattr(settings, "MAPBOX_ACCESS_TOKEN", "")
         self.default_ttl = ttl_seconds
         self.negative_ttl = negative_ttl_seconds
 
@@ -41,13 +39,9 @@ class GeocodingService:
     def _get_pooled_client(cls) -> Optional[redis.Redis]:
         """Get or initialize a thread-safe shared Redis connection pool."""
         if cls._pool is None:
-            redis_url = getattr(
-                settings, "UPSTASH_REDIS_URL", "redis://localhost:6379/0"
-            )
+            redis_url = getattr(settings, "UPSTASH_REDIS_URL", "redis://localhost:6379/0")
             try:
-                cls._pool = redis.ConnectionPool.from_url(
-                    redis_url, decode_responses=True, max_connections=20
-                )
+                cls._pool = redis.ConnectionPool.from_url(redis_url, decode_responses=True, max_connections=20)
             except Exception as exc:
                 logger.warning("Failed to initialize Redis connection pool for geocoding: %s", exc)
                 return None
@@ -103,9 +97,7 @@ class GeocodingService:
 
         return suggestions
 
-    def _fetch_from_mapbox(
-        self, clean_query: str, limit: int = 6
-    ) -> List[Dict[str, Any]]:
+    def _fetch_from_mapbox(self, clean_query: str, limit: int = 6) -> List[Dict[str, Any]]:
         """Call Mapbox Places Geocoding API."""
         if not self.access_token:
             logger.warning("Mapbox access token missing; returning empty suggestions")

@@ -44,13 +44,9 @@ class MapboxService:
             # Return up to 3 routes
             return routes[:3]
         except Exception as exc:
-            logger.error(
-                f"Mapbox Directions API request failed for {coordinates_str}: {exc}"
-            )
+            logger.error(f"Mapbox Directions API request failed for {coordinates_str}: {exc}")
             # If no access token or API fails, produce synthetic route for tests
-            return self._generate_fallback_routes(
-                origin_lat, origin_lon, dest_lat, dest_lon
-            )
+            return self._generate_fallback_routes(origin_lat, origin_lon, dest_lat, dest_lon)
 
     def _generate_fallback_routes(
         self,
@@ -62,9 +58,7 @@ class MapboxService:
         """Simulate routes when Mapbox API key is not configured or in testing."""
         from routing.utils.geo_math import haversine_distance_miles
 
-        dist_miles = haversine_distance_miles(
-            origin_lat, origin_lon, dest_lat, dest_lon
-        )
+        dist_miles = haversine_distance_miles(origin_lat, origin_lon, dest_lat, dest_lon)
         dist_meters = dist_miles * 1609.34
         duration_seconds = (dist_miles / 55.0) * 3600  # assuming 55mph average
 

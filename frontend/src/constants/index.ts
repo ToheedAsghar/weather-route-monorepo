@@ -83,6 +83,7 @@ export const API_CONFIG = {
   ENDPOINTS: {
     ROUTE: "/api/route/",
     AUTOCOMPLETE: "/api/geocode/autocomplete/",
+    HEALTH: "/api/health/",
   },
   POLLING: {
     INTERVAL_MS: 2000,

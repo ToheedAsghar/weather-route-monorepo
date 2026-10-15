@@ -50,9 +50,7 @@ class RouteEvaluationGatewayView(APIView):
             # If celery is running in eager mode or needs direct call in dev/tests:
             # evaluate_route_weather.apply_async((str(job.id),))
 
-        response_serializer = RouteEvaluationJobResponseSerializer(
-            job, context={"request": request}
-        )
+        response_serializer = RouteEvaluationJobResponseSerializer(job, context={"request": request})
         return Response(response_serializer.data, status=status.HTTP_202_ACCEPTED)
 
 
@@ -62,9 +60,7 @@ class RouteEvaluationPollingView(APIView):
     def get(self, request: Request, job_id: str) -> Response:
         """Returns the job evaluation status and final payload once completed."""
         job = get_object_or_404(RouteEvaluationJob, id=job_id)
-        serializer = RouteEvaluationJobResponseSerializer(
-            job, context={"request": request}
-        )
+        serializer = RouteEvaluationJobResponseSerializer(job, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -82,3 +78,18 @@ class GeocodeAutocompleteView(APIView):
         service = GeocodingService()
         suggestions = service.search_places(query)
         return Response(suggestions, status=status.HTTP_200_OK)
+
+
+class HealthCheckView(APIView):
+    """Lightweight, unauthenticated health check probe for platform orchestrators."""
+
+    authentication_classes = []
+    permission_classes = []
+    throttle_classes = []
+
+    def get(self, request: Request) -> Response:
+        """Returns 200 OK with service health status."""
+        return Response(
+            {"status": "healthy", "service": "weather-truck-routing"},
+            status=status.HTTP_200_OK,
+        )

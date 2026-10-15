@@ -55,9 +55,7 @@ class TestGeocodeAutocompleteEndpoint(APITestCase):
 
     @patch("routing.services.geocoding_service.GeocodingService.search_places")
     def test_get_valid_query_returns_suggestions(self, mock_search):
-        mock_search.return_value = [
-            {"id": "place.10", "place_name": "Lahore, Pakistan", "lat": 31.52, "lon": 74.35}
-        ]
+        mock_search.return_value = [{"id": "place.10", "place_name": "Lahore, Pakistan", "lat": 31.52, "lon": 74.35}]
         url = reverse("routing:geocode-autocomplete")
         response = self.client.get(url, {"q": "lahore"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)

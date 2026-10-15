@@ -2,11 +2,12 @@
 
 from django.urls import path
 
-from .views import GeocodeAutocompleteView, RouteEvaluationGatewayView, RouteEvaluationPollingView
+from .views import GeocodeAutocompleteView, HealthCheckView, RouteEvaluationGatewayView, RouteEvaluationPollingView
 
 app_name = "routing"
 
 urlpatterns = [
+    path("health/", HealthCheckView.as_view(), name="health-check"),
     path("route/", RouteEvaluationGatewayView.as_view(), name="route-gateway"),
     path(
         "route/<uuid:job_id>/",
