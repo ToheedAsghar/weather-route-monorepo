@@ -54,7 +54,7 @@ export const RISK_CONFIG: Record<RiskLevel, RiskMeta> = {
     shortLabel: "NT",
     color: "#171717",
     badgeClass: "bg-no-travel",
-    textClass: "text-foreground",
+    textClass: "text-white",
   },
 } as const;
 

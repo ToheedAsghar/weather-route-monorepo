@@ -8,11 +8,10 @@ import DepartureField from "@/molecules/departure-field";
 import RouteCard from "@/molecules/route-card";
 import RouteSkeleton from "@/molecules/route-skeleton";
 import CheckpointCard from "@/molecules/checkpoint-card";
-import ForecastSlider from "@/molecules/forecast-slider";
 import { RouteMap } from "@/molecules/route-map";
 import { checkRoutingEngineHealth, pollRouteJob, RoutingEngineOfflineError, submitRouteJob } from "@/repositories/api/route-service";
 import LocationAutocomplete from "@/molecules/location-autocomplete";
-import { API_CONFIG, PLANNER_DEFAULTS, RISK_LEGEND_ITEMS } from "@/constants";
+import { API_CONFIG, PLANNER_DEFAULTS } from "@/constants";
 import type { Checkpoint, GeoLocation, RouteOption, RouteRequest } from "@/common/types";
 
 type PlannerState = "idle" | "loading" | "success" | "error";
@@ -370,7 +369,7 @@ export function HomePage(): React.ReactElement {
           onCheckpointSelect={onCheckpointSelect}
         />
 
-        <div className="pointer-events-none absolute left-4 top-4 z-10 flex flex-col gap-1.5 max-md:left-3 max-md:top-3">
+        <div className="pointer-events-none absolute left-4 top-4 z-10 max-md:left-3 max-md:top-3">
           <div className="pointer-events-auto flex items-center gap-2.5 rounded-lg border border-border bg-background/95 px-3 py-2 shadow-card backdrop-blur-md">
             <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-background">
               <RouteIcon className="size-3.5" />
@@ -382,29 +381,16 @@ export function HomePage(): React.ReactElement {
               </p>
             </div>
           </div>
-          <div className="pointer-events-auto flex flex-wrap gap-1 rounded-lg border border-border bg-background/95 px-2 py-1 shadow-card backdrop-blur-md">
-            {RISK_LEGEND_ITEMS.map((item) => (
-              <span key={item.level} className="flex items-center gap-1 px-1 py-0.5 text-[9px] font-bold text-foreground">
-                <i className={`size-1.5 shrink-0 rounded-full ${item.badgeClass}`} />
-                {item.label}
-              </span>
-            ))}
-          </div>
         </div>
 
         {selectedCheckpoint && snapshot && (
           <CheckpointCard
             checkpoint={selectedCheckpoint}
             snapshot={snapshot}
-            onClose={() => setSelectedCheckpoint(undefined)}
-          />
-        )}
-
-        {routes.length > 0 && Boolean(activeRoute) && (
-          <ForecastSlider
             forecastHour={forecastHour}
             forecastTimeLabel={forecastTimeLabel}
             onForecastChange={setForecastHour}
+            onClose={() => setSelectedCheckpoint(undefined)}
           />
         )}
       </section>
