@@ -370,22 +370,22 @@ export function HomePage(): React.ReactElement {
           onCheckpointSelect={onCheckpointSelect}
         />
 
-        <div className="pointer-events-none absolute left-5 top-5 z-10 flex flex-col gap-2 max-md:left-3 max-md:top-3">
-          <div className="pointer-events-auto flex items-center gap-3 rounded-lg border border-border bg-panel/95 px-4 py-3 shadow-card backdrop-blur-md">
-            <span className="grid size-9 place-items-center rounded-md bg-primary text-background">
-              <RouteIcon className="size-4" />
+        <div className="pointer-events-none absolute left-4 top-4 z-10 flex flex-col gap-1.5 max-md:left-3 max-md:top-3">
+          <div className="pointer-events-auto flex items-center gap-2.5 rounded-lg border border-border bg-background/95 px-3 py-2 shadow-card backdrop-blur-md">
+            <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-background">
+              <RouteIcon className="size-3.5" />
             </span>
             <div>
-              <p className="text-[10px] font-semibold text-muted-foreground">Active corridor</p>
-              <p className="mt-0.5 text-sm font-bold text-primary">
+              <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">Active corridor</p>
+              <p className="text-xs font-extrabold text-primary">
                 {corridorTitle}
               </p>
             </div>
           </div>
-          <div className="pointer-events-auto flex flex-wrap gap-1 rounded-md border border-border bg-panel/95 p-1.5 shadow-card backdrop-blur-md">
+          <div className="pointer-events-auto flex flex-wrap gap-1 rounded-lg border border-border bg-background/95 px-2 py-1 shadow-card backdrop-blur-md">
             {RISK_LEGEND_ITEMS.map((item) => (
-              <span key={item.level} className="flex items-center gap-1 px-1.5 py-1 text-[10px] font-bold">
-                <i className={`size-2 rounded-full ${item.badgeClass}`} />
+              <span key={item.level} className="flex items-center gap-1 px-1 py-0.5 text-[9px] font-bold text-foreground">
+                <i className={`size-1.5 shrink-0 rounded-full ${item.badgeClass}`} />
                 {item.label}
               </span>
             ))}
